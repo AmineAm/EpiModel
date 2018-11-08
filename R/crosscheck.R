@@ -53,7 +53,7 @@ crosscheck.dcm <- function(param, init, control) {
     }
 
     if (param$groups == 2 && (is.null(param$balance) ||
-                                !(param$balance %in% c("g1", "g2")))) {
+                              !(param$balance %in% c("g1", "g2")))) {
       stop("Specify balance=\"g1\" or balance=\"g2\" with 2-group models",
            call. = FALSE)
     }
@@ -115,7 +115,7 @@ crosscheck.dcm <- function(param, init, control) {
   }
 
   on.exit(assign("param", param, pos = parent.frame()))
-}
+    }
 
 
 #' @title Cross Checking of Inputs for Stochastic Individual Contact Models
@@ -264,16 +264,9 @@ crosscheck.net <- function(x, param, init, control) {
       }
     }
 
-    bip <- ifelse(is.bipartite(nw), TRUE, FALSE)
-
-    if (bip == TRUE & is.null(control$pid.prefix)) {
-      control$pid.prefix <- c("F", "M")
-    }
-
     if (statOnNw == TRUE && is.null(control$attr.rules$status)) {
       control$attr.rules$status <- "s"
     }
-
 
     # Checks ------------------------------------------------------------------
 
@@ -316,49 +309,17 @@ crosscheck.net <- function(x, param, init, control) {
       }
     }
 
-    # Bipartite model checks for inital conditions
-    if (bip == TRUE & is.null(init$i.num.m2) &
-          is.null(init$status.vector) & statOnNw == FALSE) {
-      stop("Specify i.num.m2 for bipartite simulations", call. = FALSE)
-    }
-
     # Recovery rate and initial recovered checks
     if (control$type %in% c("SIR", "SIS")) {
       if (is.null(param$rec.rate)) {
         stop("Specify rec.rate in param.net", call. = FALSE)
-      }
-      if (bip == TRUE & is.null(param$rec.rate.m2)) {
-        stop("Specify rec.rate.m2 in param.net", call. = FALSE)
       }
     }
     if (control$type == "SIR") {
       if (is.null(init$r.num) & is.null(init$status.vector) & statOnNw == FALSE) {
         stop("Specify r.num in init.net", call. = FALSE)
       }
-      if (bip == TRUE & is.null(init$r.num.m2) & is.null(init$status.vector) &
-          statOnNw == FALSE) {
-        stop("Specify r.num.m2 in init.net", call. = FALSE)
-      }
     }
-
-    # Check demographic parameters for bipartite
-    if (bip == TRUE & param$vital == TRUE) {
-      if (is.null(param$a.rate.m2)) {
-        stop("Specify a.rate.m2 in param.net", call. = FALSE)
-      }
-      if (is.null(param$ds.rate.m2)) {
-        stop("Specify ds.rate.m2 in param.net", call. = FALSE)
-      }
-      if (is.null(param$di.rate.m2)) {
-        stop("Specify di.rate.m2 in param.net", call. = FALSE)
-      }
-      if (control$type == "SIR") {
-        if (is.null(param$dr.rate.m2)) {
-          stop("Specify dr.rate.m2 in param.net", call. = FALSE)
-        }
-      }
-    }
-
 
     ## Deprecated parameters
     bim <- grep(".FUN", names(formals(control.net)), value = TRUE)
@@ -413,3 +374,204 @@ crosscheck.net <- function(x, param, init, control) {
   assign("control", control, pos = parent.frame())
 }
 
+#' @title Cross Checking of Inputs for Stochastic Bipartite Network Models
+#'
+#' @description This function checks that the estimation object from
+#'              \code{\link{netest}} and the three parameter lists from
+#'              \code{\link{param.net}}, \code{\link{init.net}}, and
+#'              \code{\link{control.net}} are consistent.
+#'
+#' @param x An \code{EpiModel} object of class \code{\link{netest}}.
+#' @param param An \code{EpiModel} object of class \code{\link{param.net}}.
+#' @param init An \code{EpiModel} object of class \code{\link{init.net}}.
+#' @param control An \code{EpiModel} object of class \code{\link{control.net}}.
+#'
+#' @return
+#' This function returns no objects.
+#'
+#' @export
+#' @keywords internal
+#'
+crosscheck.net.bip <- function(x, param, init, control) {
+
+  if (control$start == 1 && control$skip.check == FALSE) {
+
+    # Main class check --------------------------------------------------------
+    if (class(x) != "netest" && class(x) != "netsim") {
+      stop("x must be either an object of class netest or class netsim",
+           call. = FALSE)
+    }
+    if (!inherits(param, "param.net")) {
+      stop("param must an object of class param.net", call. = FALSE)
+    }
+    if (!inherits(init, "init.net")) {
+      stop("init must an object of class init.net", call. = FALSE)
+    }
+    if (!inherits(control, "control.net")) {
+      stop("control must an object of class control.net", call. = FALSE)
+    }
+
+    if (class(x$fit) == "network") {
+      nw <- x$fit
+    } else {
+      nw <- x$fit$network
+    }
+
+    # Defaults ----------------------------------------------------------------
+
+    # Is status in network formation formula?
+    statOnNw <- ("status" %in% get_formula_term_attr(x$formation, x$fit$network))
+
+    # Set dependent modeling defaults if vital or status on nw
+    if (is.null(control$depend)) {
+      if (param$vital == TRUE | statOnNw == TRUE) {
+        control$depend <- TRUE
+      } else {
+        control$depend <- FALSE
+      }
+    }
+
+    if (is.null(control$pid.prefix)) {
+      control$pid.prefix <- c("F", "M")
+    }
+
+    if (statOnNw == TRUE && is.null(control$attr.rules$status)) {
+      control$attr.rules$status <- "s"
+    }
+
+
+    # Checks ------------------------------------------------------------------
+
+    # Check that prevalence in NW attr status and initial conditions match
+    if (statOnNw == TRUE) {
+      nw1 <- sum(get.vertex.attribute(nw, "status") == 1)
+      init1 <- sum(unlist(init[grep("i.num", names(init), value = TRUE)]))
+      if ("i.num" %in% names(init) && nw1 != init1) {
+        warning("Overriding init infected settings with network status attribute",
+                call. = FALSE, immediate. = TRUE)
+        if (interactive()) Sys.sleep(4)
+      }
+    }
+
+    # If status not in formation formula but set on original network, state that it
+    #   will be ignored
+    if (statOnNw == FALSE & "status" %in% names(nw$val[[1]])) {
+      warning("Overriding status vertex attribute on network with init.net conditions",
+              call. = FALSE, immediate. = TRUE)
+      if (interactive()) Sys.sleep(4)
+    }
+
+
+    # Check consistency of status vector to network structure
+    if (!is.null(init$status.vector)) {
+      if (length(init$status.vector) != network.size(nw)) {
+        stop("Length of status.vector is unequal to size of initial network")
+      }
+      svals <- sort(unique(init$status.vector))
+      if (control$type == "SIR") {
+        if (any(svals %in% c("s", "i", "r") == FALSE)) {
+          stop("status.vector contains values other than \"s\", \"i\", and \"r\" ",
+               call. = FALSE)
+        }
+      } else {
+        if (any(svals %in% c("s", "i") == FALSE)) {
+          stop("status.vector contains values other than \"s\" and \"i\" ",
+               call. = FALSE)
+        }
+      }
+    }
+
+    # Bipartite model checks for inital conditions
+    if (is.null(init$i.num.m2) &
+        is.null(init$status.vector) & statOnNw == FALSE) {
+      stop("Specify i.num.m2 for bipartite simulations", call. = FALSE)
+    }
+
+    # Recovery rate and initial recovered checks
+    if (control$type %in% c("SIR", "SIS")) {
+      if (is.null(param$rec.rate)) {
+        stop("Specify rec.rate in param.net", call. = FALSE)
+      }
+      if (is.null(param$rec.rate.m2)) {
+        stop("Specify rec.rate.m2 in param.net", call. = FALSE)
+      }
+    }
+    if (control$type == "SIR") {
+      if (is.null(init$r.num) & is.null(init$status.vector) & statOnNw == FALSE) {
+        stop("Specify r.num in init.net", call. = FALSE)
+      }
+      if (is.null(init$r.num.m2) & is.null(init$status.vector) &
+          statOnNw == FALSE) {
+        stop("Specify r.num.m2 in init.net", call. = FALSE)
+      }
+    }
+
+    # Check demographic parameters for bipartite
+      if (is.null(param$a.rate.m2)) {
+        stop("Specify a.rate.m2 in param.net", call. = FALSE)
+      }
+      if (is.null(param$ds.rate.m2)) {
+        stop("Specify ds.rate.m2 in param.net", call. = FALSE)
+      }
+      if (is.null(param$di.rate.m2)) {
+        stop("Specify di.rate.m2 in param.net", call. = FALSE)
+      }
+      if (control$type == "SIR") {
+        if (is.null(param$dr.rate.m2)) {
+          stop("Specify dr.rate.m2 in param.net", call. = FALSE)
+        }
+      }
+
+
+    ## Deprecated parameters
+    bim <- grep(".FUN", names(formals(control.net)), value = TRUE)
+    um <- which(grepl(".FUN", names(control)) & !(names(control) %in% bim))
+    if (length(um) == 0 && !is.null(control$type)) {
+      if (!is.null(param$trans.rate)) {
+        stop("The trans.rate parameter is deprecated. Use the inf.prob ",
+             "parameter instead.", call. = FALSE)
+      }
+      if (!is.null(param$trans.rate.m2)) {
+        stop("The trans.rate.m2 parameter is deprecated. Use the inf.prob.m2 ",
+             "parameter instead.", call. = FALSE)
+      }
+    }
+
+  }
+
+  if (control$start > 1) {
+
+    control$depend <- TRUE
+
+    if (control$skip.check == FALSE) {
+      if (class(x) != "netsim") {
+        stop("x must be a netsim object if control setting start > 1",
+             call. = FALSE)
+      }
+      if (is.null(x$attr)) {
+        stop("x must contain attr to restart simulation, see save.other ",
+             "control setting", call. = FALSE)
+      }
+      if (is.null(x$network)) {
+        stop("x must contain network object to restart simulation, ",
+             "see save.network control setting", call. = FALSE)
+      }
+      if (control$nsteps < control$start) {
+        stop("control setting nsteps must be > control setting start in ",
+             "restarted simulations", call. = FALSE)
+      }
+      if (control$start > x$control$nsteps + 1) {
+        stop("control setting start must be 1 greater than the nsteps in the ",
+             "prior simulation", call. = FALSE)
+      }
+
+
+    }
+
+  }
+
+
+  ## In-place assignment to update param and control
+  assign("param", param, pos = parent.frame())
+  assign("control", control, pos = parent.frame())
+}

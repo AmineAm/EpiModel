@@ -294,7 +294,7 @@ param.icm <- function(inf.prob, inter.eff, inter.start, act.rate, rec.rate,
 #'        or as \code{NA} in which case the mode 1 rate, \code{a.rate}, governs
 #'        the mode 2 rate. The latter is used when, for example, the first mode
 #'        is conceptualized as female, and the female population size determines
-#'        the arrival rate. Such arrivalss are evenly allocated between the two modes.
+#'        the arrival rate. Such arrivals are evenly allocated between the two modes.
 #' @param ds.rate.m2 Departure or exit rate for mode 2 susceptible.
 #' @param di.rate.m2 Departure or exit rate for mode 2 infected.
 #' @param dr.rate.m2 Departure or exit rate for mode 2 recovered. This parameter is
