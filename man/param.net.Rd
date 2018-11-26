@@ -66,7 +66,7 @@ numerically as the rate of new arrivals per mode 2 persons per unit time,
 or as \code{NA} in which case the mode 1 rate, \code{a.rate}, governs
 the mode 2 rate. The latter is used when, for example, the first mode
 is conceptualized as female, and the female population size determines
-the arrival rate. Such arrivalss are evenly allocated between the two modes.}
+the arrival rate. Such arrivals are evenly allocated between the two modes.}
 
 \item{ds.rate.m2}{Departure or exit rate for mode 2 susceptible.}
 

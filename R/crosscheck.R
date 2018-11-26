@@ -47,15 +47,10 @@ crosscheck.dcm <- function(param, init, control) {
     }
 
     if (any(grepl(".g2", names(param))) == TRUE) {
-      param$groups <- 2
+      stop("Calling single group compartmental model, but specifying two group parameters",
+           call. = FALSE)
     } else {
       param$groups <- 1
-    }
-
-    if (param$groups == 2 && (is.null(param$balance) ||
-                              !(param$balance %in% c("g1", "g2")))) {
-      stop("Specify balance=\"g1\" or balance=\"g2\" with 2-group models",
-           call. = FALSE)
     }
 
     ## Error checks
@@ -67,33 +62,16 @@ crosscheck.dcm <- function(param, init, control) {
     # Check that rec.rate is supplied for SIR models
     if (control$type %in% c("SIR", "SIS") & is.null(param$rec.rate)) {
       stop("Specify rec.rate in param.dcm", call. = FALSE)
-      if (param$groups == 2 & is.null(param$rec.rate.g2)) {
-        stop("Specify rec.rate.g2 in param.dcm", call. = FALSE)
-      }
     }
 
     # Check that r.num is supplied for SIR models
     if (control$type == "SIR" & is.null(init$r.num)) {
       stop("Specify r.num in init.dcm", call. = FALSE)
-      if (param$groups == 2 & is.null(init$r.num.g2)) {
-        stop("Specify r.num.g2 in init.dcm", call. = FALSE)
-      }
-    }
+          }
 
     # Check that groups implied by init and params are consistent
     if (any(grepl(".g2", names(init))) == TRUE) {
-      init.groups <- 2
-    } else {
-      init.groups <- 1
-    }
-    if (param$groups == 2 && init.groups == 1) {
-      stop("Group 2 parameters specified in param.dcm,
-           \rbut missing group 2 initial states in init.dcm",
-           call. = FALSE)
-    }
-    if (param$groups == 1 && init.groups == 2) {
-      stop("Group 2 initial stats specified in init.dcm,
-           but missing group 2 parameters in param.dcm",
+      stop("Calling single group compartmental model, but specifying two group initial conditions",
            call. = FALSE)
     }
 
@@ -149,41 +127,29 @@ crosscheck.icm <- function(param, init, control) {
 
   if (control$skip.check == FALSE) {
 
+    if (any(grepl(".g2", names(param))) == TRUE) {
+      stop("Calling single group compartmental model, but specifying group two parameters",
+           call. = FALSE)
+    }
+
     ## Check that rec.rate is supplied for SIR models
-    if (control$type %in% c("SIR", "SIS")) {
-      if (is.null(param$rec.rate)) {
+    if (control$type %in% c("SIR", "SIS") && is.null(param$rec.rate)) {
         stop("Specify rec.rate in param.icm", call. = FALSE)
       }
-      if (param$groups == 2 & is.null(param$rec.rate.g2)) {
-        stop("Specify rec.rate.g2 in param.icm", call. = FALSE)
-      }
-    }
+
 
 
     ## Check that paramets and init are supplied for SIR models
-    if (control$type == "SIR") {
-      if (is.null(init$r.num)) {
+    if (control$type == "SIR" && is.null(init$r.num)) {
         stop("Specify r.num in init.icm", call. = FALSE)
-      }
-      if (param$groups == 2 & is.null(init$r.num.g2)) {
-        stop("Specify r.num.g2 in init.icm", call. = FALSE)
-      }
-    }
+          }
 
     ## Check that groups implied by init and params are consistent
     if (any(grepl(".g2", names(init))) == TRUE) {
-      init.groups <- 2
-    } else {
-      init.groups <- 1
+      stop("Calling single group individual contact model, but specifying
+           two group initial conditions", call. = FALSE)
     }
-    if (param$groups == 2 && init.groups == 1) {
-      stop("Group 2 parameters specified in param.dcm, but missing group 2, ",
-           "initial states in init.icm", call. = FALSE)
-    }
-    if (param$groups == 1 && init.groups == 2) {
-      stop("Group 2 initial stats specified in init.dcm, but missing group 2 ",
-           "parameters in param.icm", call. = FALSE)
-    }
+
 
     ## Deprecated parameters
     bim <- grep(".FUN", names(formals(control.icm)), value = TRUE)
@@ -374,6 +340,231 @@ crosscheck.net <- function(x, param, init, control) {
   assign("control", control, pos = parent.frame())
 }
 
+
+#' @title Cross Checking of Inputs for Deterministic Bipartite Compartmental Models
+#'
+#' @description This function checks that the three parameter lists from
+#'              \code{\link{param.dcm.bip}}, \code{\link{init.dcm.bip}}, and
+#'              \code{\link{control.dcm.bip}} are consistent.
+#'
+#' @param param An \code{EpiModel} object of class \code{\link{param.dcm.bip}}.
+#' @param init An \code{EpiModel} object of class \code{\link{init.dcm.bip}}.
+#' @param control An \code{EpiModel} object of class \code{\link{control.dcm.bip}}.
+#'
+#' @return
+#' This function returns no objects.
+#'
+#' @export
+#' @keywords internal
+#'
+crosscheck.dcm.bip <- function(param, init, control) {
+
+  # Main class check --------------------------------------------------------
+  if (!inherits(param, "param.dcm.bip")) {
+    stop("param must an object of class param.dcm.bip", call. = FALSE)
+  }
+  if (!inherits(init, "init.dcm.bip")) {
+    stop("init must an object of class init.dcm.bip", call. = FALSE)
+  }
+  if (!inherits(control, "control.dcm.bip")) {
+    stop("control must an object of class control.dcm.bip", call. = FALSE)
+  }
+
+  # Parameter checks for base models ----------------------------------
+  if (is.null(control$new.mod)) {
+
+    ## Defaults
+    if (is.null(param$act.rate)) {
+      param$act.rate <- 1
+    }
+    if (is.null(param$vital)) {
+      if (!is.null(param$a.rate) |
+          !is.null(param$ds.rate) |
+          !is.null(param$di.rate) |
+          !is.null(param$dr.rate)) {
+        param$vital <- TRUE
+      } else {
+        param$vital <- FALSE
+      }
+    }
+
+    if (any(grepl(".g2", names(param))) == TRUE) {
+      param$groups <- 2
+    } else {
+      stop("Calling bipartite compartmental model, but no group 2 model parameters
+           specified", call. = FALSE)
+    }
+
+
+    if (is.null(param$balance) || !(param$balance %in% c("g1", "g2"))) {
+      stop("Specify balance=\"g1\" or balance=\"g2\" with 2-group models",
+           call. = FALSE)
+    }
+
+    ## Error checks
+    # Specify inf.prob for both groups
+    if (is.null(param$inf.prob)) {
+      stop("Specify inf.prob in param.dcm.bip", call. = FALSE)
+    }
+    if (is.null(param$inf.prob.g2)) {
+      stop("Specify rec.rate.g2 in param.dcm.bip", call. = FALSE)
+    }
+
+    # Check that rec.rate is supplied for bipartite SIR/SIS models
+    if (control$type %in% c("SIR", "SIS")) {
+      if (is.null(param$rec.rate)){
+        stop("Specify rec.rate in param.dcm.bip", call. = FALSE)
+      }
+      if (is.null(param$rec.rate.g2)) {
+        stop("Specify rec.rate.g2 in param.dcm.bip", call. = FALSE)
+      }
+    }
+
+    # Check that r.num is supplied for bipartite SIR models
+    if (control$type == "SIR") {
+      if (is.null(init$r.num)){
+        stop("Specify r.num in init.dcm.bip", call. = FALSE)
+      }
+      if (is.null(init$r.num.g2)) {
+        stop("Specify r.num.g2 in init.dcm", call. = FALSE)
+      }
+    }
+
+
+    # Check that groups implied by init and params are consistent (is any of this redun.)
+    if (any(grepl(".g2", names(init))) == TRUE) {
+      init.groups <- 2
+    } else {
+      init.groups <- 1
+    }
+    if (param$groups == 2 && init.groups == 1) {
+      stop("Group 2 parameters specified in param.dcm.bip,
+           \rbut missing group 2 initial states in init.dcm.bip",
+           call. = FALSE)
+    }
+    #The below will never be called; is this ok
+    if (param$groups == 1 && init.groups == 2) {
+      stop("Group 2 initial stats specified in init.dcm.bip,
+           but missing group 2 parameters in param.dcm.bip",
+           call. = FALSE)
+    }
+
+    # Over-specified initial conditions
+    if (control$type != "SIR" & any(c("r.num", "r.num.m2") %in% names(init))) {
+      stop("Specified initial number recovered for non-SIR model",
+           call. = FALSE)
+    }
+
+    # Deprecated parameters
+    if (!is.null(param$trans.rate)) {
+      stop("The trans.rate parameter is deprecated. Use the inf.prob parameter instead.",
+           call. = FALSE)
+    }
+    if (!is.null(param$trans.rate.g2)) {
+      stop("The trans.rate.g2 parameter is deprecated. Use the inf.prob.g2 parameter instead.",
+           call. = FALSE)
+    }
+    }
+
+  on.exit(assign("param", param, pos = parent.frame()))
+    }
+
+
+#' @title Cross Checking of Inputs for Stochastic Bipartite Individual Contact Models
+#'
+#' @description This function checks that the three parameter lists from
+#'              \code{\link{param.icm.bip}}, \code{\link{init.icm.bip}}, and
+#'              \code{\link{control.icm.bip}} are consistent.
+#'
+#' @param param An \code{EpiModel} object of class \code{\link{param.icm.bip}}.
+#' @param init An \code{EpiModel} object of class \code{\link{init.icm.bip}}.
+#' @param control An \code{EpiModel} object of class \code{\link{control.icm.bip}}.
+#'
+#' @return
+#' This function returns no objects.
+#'
+#' @export
+#' @keywords internal
+#'
+crosscheck.icm.bip <- function(param, init, control) {
+
+  ## Main class check
+  if (!inherits(param, "param.icm.bip")) {
+    stop("param must an object of class param.icm.bip", call. = FALSE)
+  }
+  if (!inherits(init, "init.icm.bip")) {
+    stop("init must an object of class init.icm.bip", call. = FALSE)
+  }
+  if (!inherits(control, "control.icm.bip")) {
+    stop("control must an object of class control.icm.bip", call. = FALSE)
+  }
+
+  if (control$skip.check == FALSE) {
+
+    if (any(grepl(".g2", names(param))) == TRUE) {
+      param$groups <- 2
+    } else {
+      stop("Calling bipartite individual contact model, but no group 2 model parameters
+           specified", call. = FALSE)
+    }
+
+    ## Check that rec.rate is supplied for SIR models
+    if (control$type %in% c("SIR", "SIS")) {
+      if (is.null(param$rec.rate)) {
+        stop("Specify rec.rate in param.icm", call. = FALSE)
+      }
+      if (is.null(param$rec.rate.g2)) {
+        stop("Specify rec.rate.g2 in param.icm", call. = FALSE)
+      }
+    }
+
+
+    ## Check that paramets and init are supplied for SIR models
+    if (control$type == "SIR") {
+      if (is.null(init$r.num)) {
+        stop("Specify r.num in init.icm", call. = FALSE)
+      }
+      if (is.null(init$r.num.g2)) {
+        stop("Specify r.num.g2 in init.icm", call. = FALSE)
+      }
+    }
+
+    ## Check that groups implied by init and params are consistent
+    if (any(grepl(".g2", names(init))) == TRUE) {
+      init.groups <- 2
+    } else {
+      init.groups <- 1
+    }
+    if (param$groups == 2 && init.groups == 1) {
+      stop("Group 2 parameters specified in param.dcm, but missing group 2, ",
+           "initial states in init.icm", call. = FALSE)
+    }
+    if (param$groups == 1 && init.groups == 2) {
+      stop("Group 2 initial stats specified in init.dcm, but missing group 2 ",
+           "parameters in param.icm", call. = FALSE)
+    }
+
+    ## Deprecated parameters
+    bim <- grep(".FUN", names(formals(control.icm)), value = TRUE)
+    um <- which(grepl(".FUN", names(control)) & !(names(control) %in% bim))
+    if (length(um) == 0 && !is.null(control$type)) {
+      if (!is.null(param$trans.rate)) {
+        stop("The trans.rate parameter is deprecated. Use the inf.prob ",
+             "parameter instead.", call. = FALSE)
+      }
+      if (!is.null(param$trans.rate.g2)) {
+        stop("The trans.rate.g2 parameter is deprecated. Use the inf.prob.g2 ",
+             "parameter instead.", call. = FALSE)
+      }
+    }
+
+    }
+
+  ## In-place assignment to update param and control
+  on.exit(assign("param", param, pos = parent.frame()))
+  on.exit(assign("control", control, pos = parent.frame()), add = TRUE)
+}
+
 #' @title Cross Checking of Inputs for Stochastic Bipartite Network Models
 #'
 #' @description This function checks that the estimation object from
@@ -397,18 +588,18 @@ crosscheck.net.bip <- function(x, param, init, control) {
   if (control$start == 1 && control$skip.check == FALSE) {
 
     # Main class check --------------------------------------------------------
-    if (class(x) != "netest" && class(x) != "netsim") {
+    if (class(x) != "netest.bip" && class(x) != "netsim.bip") {
       stop("x must be either an object of class netest or class netsim",
            call. = FALSE)
     }
-    if (!inherits(param, "param.net")) {
-      stop("param must an object of class param.net", call. = FALSE)
+    if (!inherits(param, "param.net.bip")) {
+      stop("param must an object of class param.net.bip", call. = FALSE)
     }
-    if (!inherits(init, "init.net")) {
-      stop("init must an object of class init.net", call. = FALSE)
+    if (!inherits(init, "init.net.bip")) {
+      stop("init must an object of class init.net.bip", call. = FALSE)
     }
-    if (!inherits(control, "control.net")) {
-      stop("control must an object of class control.net", call. = FALSE)
+    if (!inherits(control, "control.net.bip")) {
+      stop("control must an object of class control.net.bip", call. = FALSE)
     }
 
     if (class(x$fit) == "network") {
@@ -506,21 +697,21 @@ crosscheck.net.bip <- function(x, param, init, control) {
       }
     }
 
-    # Check demographic parameters for bipartite
-      if (is.null(param$a.rate.m2)) {
-        stop("Specify a.rate.m2 in param.net", call. = FALSE)
+    # Check demographic parameters
+    if (is.null(param$a.rate.m2)) {
+      stop("Specify a.rate.m2 in param.net", call. = FALSE)
+    }
+    if (is.null(param$ds.rate.m2)) {
+      stop("Specify ds.rate.m2 in param.net", call. = FALSE)
+    }
+    if (is.null(param$di.rate.m2)) {
+      stop("Specify di.rate.m2 in param.net", call. = FALSE)
+    }
+    if (control$type == "SIR") {
+      if (is.null(param$dr.rate.m2)) {
+        stop("Specify dr.rate.m2 in param.net", call. = FALSE)
       }
-      if (is.null(param$ds.rate.m2)) {
-        stop("Specify ds.rate.m2 in param.net", call. = FALSE)
-      }
-      if (is.null(param$di.rate.m2)) {
-        stop("Specify di.rate.m2 in param.net", call. = FALSE)
-      }
-      if (control$type == "SIR") {
-        if (is.null(param$dr.rate.m2)) {
-          stop("Specify dr.rate.m2 in param.net", call. = FALSE)
-        }
-      }
+    }
 
 
     ## Deprecated parameters
@@ -544,8 +735,8 @@ crosscheck.net.bip <- function(x, param, init, control) {
     control$depend <- TRUE
 
     if (control$skip.check == FALSE) {
-      if (class(x) != "netsim") {
-        stop("x must be a netsim object if control setting start > 1",
+      if (class(x) != "netsim.bip") {
+        stop("x must be a netsim.bip object if control setting start > 1",
              call. = FALSE)
       }
       if (is.null(x$attr)) {
@@ -553,7 +744,7 @@ crosscheck.net.bip <- function(x, param, init, control) {
              "control setting", call. = FALSE)
       }
       if (is.null(x$network)) {
-        stop("x must contain network object to restart simulation, ",
+        stop("x must contain network.bip object to restart simulation, ",
              "see save.network control setting", call. = FALSE)
       }
       if (control$nsteps < control$start) {
@@ -575,3 +766,4 @@ crosscheck.net.bip <- function(x, param, init, control) {
   assign("param", param, pos = parent.frame())
   assign("control", control, pos = parent.frame())
 }
+

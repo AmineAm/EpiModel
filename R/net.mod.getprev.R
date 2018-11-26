@@ -19,7 +19,6 @@
 get_prev.net <- function(dat, at) {
 
   active <- dat$attr$active
-  modes <- dat$param$modes
 
   # Subset attr to active == 1
   l <- lapply(1:length(dat$attr), function(x) dat$attr[[x]][active == 1])
