@@ -94,6 +94,171 @@ mod_SI_1g_op <- function(t, t0, parms) {
 }
 
 
+# SIR, 1 group, closed pop ------------------------------------------------
+#' @rdname dcm.mods
+#' @keywords internal
+#' @export
+mod_SIR_1g_cl <- function(t, t0, parms) {
+  with(as.list(c(t0, parms)), {
+
+    # Derivations
+    num <- s.num + i.num + r.num
+
+    # Parameters
+    lambda <- inf.prob * act.rate * i.num / num
+    if (!is.null(parms$inter.eff) && t >= inter.start) {
+      lambda <- lambda * (1 - inter.eff)
+    }
+
+    # Flows
+    si.flow <- lambda * s.num
+    ir.flow <- rec.rate * i.num
+
+    # ODEs
+    dS <- -si.flow
+    dI <- si.flow - ir.flow
+    dR <- ir.flow
+
+    # Output
+    list(c(dS, dI, dR,
+           si.flow, ir.flow),
+         num = num)
+  })
+}
+
+
+# SIR, 1 group, open pop --------------------------------------------------
+#' @rdname dcm.mods
+#' @keywords internal
+#' @export
+mod_SIR_1g_op <- function(t, t0, parms) {
+  with(as.list(c(t0, parms)), {
+
+    # Derivations
+    num <- s.num + i.num + r.num
+
+    # Parameters
+    lambda <- inf.prob * act.rate * i.num / num
+    if (!is.null(parms$inter.eff) && t >= inter.start) {
+      lambda <- lambda * (1 - inter.eff)
+    }
+
+    # Flows
+    si.flow <- lambda * s.num
+    ir.flow <- rec.rate * i.num
+    a.flow <- a.rate * num
+    ds.flow <- ds.rate * s.num
+    di.flow <- di.rate * i.num
+    dr.flow <- dr.rate * r.num
+
+    # ODEs
+    dS <- -si.flow + a.flow - ds.flow
+    dI <- si.flow - ir.flow - di.flow
+    dR <- ir.flow - dr.flow
+
+    # Output
+    list(c(dS, dI, dR,
+           si.flow, ir.flow, a.flow,
+           ds.flow, di.flow, dr.flow),
+         num = num)
+  })
+}
+
+
+# SIS, 1 group, closed pop ------------------------------------------------
+#' @rdname dcm.mods
+#' @keywords internal
+#' @export
+mod_SIS_1g_cl <- function(t, t0, parms) {
+  with(as.list(c(t0, parms)), {
+
+    # Derivations
+    num <- s.num + i.num
+
+    # Parameters
+    lambda <- inf.prob * act.rate * i.num / num
+    if (!is.null(parms$inter.eff) && t >= inter.start) {
+      lambda <- lambda * (1 - inter.eff)
+    }
+
+    # Flows
+    si.flow <- lambda * s.num
+    is.flow <- rec.rate * i.num
+
+    # ODEs
+    dS <- -si.flow + is.flow
+    dI <- si.flow - is.flow
+
+    # Output
+    list(c(dS, dI, si.flow, is.flow),
+         num = num)
+  })
+}
+
+
+# SIS, 1 group, open pop --------------------------------------------------
+#' @rdname dcm.mods
+#' @keywords internal
+#' @export
+mod_SIS_1g_op <- function(t, t0, parms) {
+  with(as.list(c(t0, parms)), {
+
+    # Derivations
+    num <- s.num + i.num
+
+    # Parameters
+    lambda <- inf.prob * act.rate * i.num / num
+    if (!is.null(parms$inter.eff) && t >= inter.start) {
+      lambda <- lambda * (1 - inter.eff)
+    }
+
+    # Flows
+    si.flow <- lambda * s.num
+    is.flow <- rec.rate * i.num
+    a.flow <- a.rate * num
+    ds.flow <- ds.rate * s.num
+    di.flow <- di.rate * i.num
+
+    # ODEs
+    dS <- -si.flow + is.flow + a.flow - ds.flow
+    dI <- si.flow - is.flow - di.flow
+
+    # Output
+    list(c(dS, dI, si.flow, is.flow, a.flow, ds.flow, di.flow),
+         num = num)
+  })
+}
+
+
+#' @title Bipartite Deterministic Compartmental Model Functions
+#'
+#' @description These functions parameterize the base deterministic
+#'              compartmental models solved using the \code{dcm.bip} function.
+#'
+#' @param t Time vector, passed into model function internally through
+#'        \code{\link{dcm.bip}} via the control settings in \code{\link{control.dcm.bip}}.
+#' @param t0 Initial conditions for model, passed into model function internally
+#'        through \code{\link{dcm.bip}} via the initial conditions in
+#'        \code{\link{init.dcm.bip}}.
+#' @param parms Model parameters, passed into model function internally through
+#'        \code{\link{dcm.bip}} via the parameter settings in \code{\link{param.dcm.bip}}.
+#'
+#' @details
+#' This help page shows the names of all the base bipartite deterministic compartmental
+#' model functions supported in EpiModel. Base models are those already
+#' programmed interally within the software. The model functions may be printed
+#' to see their internal structure, either directly on the console or by using
+#' the \code{print.mod} argument in \code{\link{control.dcm.bip}}.
+#'
+#' The naming convention for the models listed here follows the format:
+#' \code{mod_<disease type>_<number of groups>_<vital dynamics>}. The supported
+#' disease types are SI, SIS, and SIR; the number of groups is 2; and the
+#' vital dynamic options are closed (fixed population composition) or open (with
+#' arrivals and departures).
+#' @name dcm.mods
+#'
+NULL
+
 # SI, 2 group, closed pop -------------------------------------------------
 #' @rdname dcm.mods
 #' @keywords internal
@@ -197,77 +362,6 @@ mod_SI_2g_op <- function(t, t0, parms) {
            si.flow.g2, a.flow.g2, ds.flow.g2, di.flow.g2),
          num = num.g1,
          num.g2 = num.g2)
-  })
-}
-
-
-# SIR, 1 group, closed pop ------------------------------------------------
-#' @rdname dcm.mods
-#' @keywords internal
-#' @export
-mod_SIR_1g_cl <- function(t, t0, parms) {
-  with(as.list(c(t0, parms)), {
-
-    # Derivations
-    num <- s.num + i.num + r.num
-
-    # Parameters
-    lambda <- inf.prob * act.rate * i.num / num
-    if (!is.null(parms$inter.eff) && t >= inter.start) {
-      lambda <- lambda * (1 - inter.eff)
-    }
-
-    # Flows
-    si.flow <- lambda * s.num
-    ir.flow <- rec.rate * i.num
-
-    # ODEs
-    dS <- -si.flow
-    dI <- si.flow - ir.flow
-    dR <- ir.flow
-
-    # Output
-    list(c(dS, dI, dR,
-           si.flow, ir.flow),
-         num = num)
-  })
-}
-
-
-# SIR, 1 group, open pop --------------------------------------------------
-#' @rdname dcm.mods
-#' @keywords internal
-#' @export
-mod_SIR_1g_op <- function(t, t0, parms) {
-  with(as.list(c(t0, parms)), {
-
-    # Derivations
-    num <- s.num + i.num + r.num
-
-    # Parameters
-    lambda <- inf.prob * act.rate * i.num / num
-    if (!is.null(parms$inter.eff) && t >= inter.start) {
-      lambda <- lambda * (1 - inter.eff)
-    }
-
-    # Flows
-    si.flow <- lambda * s.num
-    ir.flow <- rec.rate * i.num
-    a.flow <- a.rate * num
-    ds.flow <- ds.rate * s.num
-    di.flow <- di.rate * i.num
-    dr.flow <- dr.rate * r.num
-
-    # ODEs
-    dS <- -si.flow + a.flow - ds.flow
-    dI <- si.flow - ir.flow - di.flow
-    dR <- ir.flow - dr.flow
-
-    # Output
-    list(c(dS, dI, dR,
-           si.flow, ir.flow, a.flow,
-           ds.flow, di.flow, dr.flow),
-         num = num)
   })
 }
 
@@ -386,71 +480,6 @@ mod_SIR_2g_op <- function(t, t0, parms) {
            si.flow.g2, ir.flow.g2, a.flow.g2, ds.flow.g2,
            di.flow.g2, dr.flow.g2),
          num = num.g1, num.g2 = num.g2)
-  })
-}
-
-
-# SIS, 1 group, closed pop ------------------------------------------------
-#' @rdname dcm.mods
-#' @keywords internal
-#' @export
-mod_SIS_1g_cl <- function(t, t0, parms) {
-  with(as.list(c(t0, parms)), {
-
-    # Derivations
-    num <- s.num + i.num
-
-    # Parameters
-    lambda <- inf.prob * act.rate * i.num / num
-    if (!is.null(parms$inter.eff) && t >= inter.start) {
-      lambda <- lambda * (1 - inter.eff)
-    }
-
-    # Flows
-    si.flow <- lambda * s.num
-    is.flow <- rec.rate * i.num
-
-    # ODEs
-    dS <- -si.flow + is.flow
-    dI <- si.flow - is.flow
-
-    # Output
-    list(c(dS, dI, si.flow, is.flow),
-         num = num)
-  })
-}
-
-
-# SIS, 1 group, open pop --------------------------------------------------
-#' @rdname dcm.mods
-#' @keywords internal
-#' @export
-mod_SIS_1g_op <- function(t, t0, parms) {
-  with(as.list(c(t0, parms)), {
-
-    # Derivations
-    num <- s.num + i.num
-
-    # Parameters
-    lambda <- inf.prob * act.rate * i.num / num
-    if (!is.null(parms$inter.eff) && t >= inter.start) {
-      lambda <- lambda * (1 - inter.eff)
-    }
-
-    # Flows
-    si.flow <- lambda * s.num
-    is.flow <- rec.rate * i.num
-    a.flow <- a.rate * num
-    ds.flow <- ds.rate * s.num
-    di.flow <- di.rate * i.num
-
-    # ODEs
-    dS <- -si.flow + is.flow + a.flow - ds.flow
-    dI <- si.flow - is.flow - di.flow
-
-    # Output
-    list(c(dS, dI, si.flow, is.flow, a.flow, ds.flow, di.flow),
-         num = num)
   })
 }
 

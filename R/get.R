@@ -403,3 +403,411 @@ get_sims <- function(x, sims, var) {
 
   return(out)
 }
+
+
+
+#' @title Extract networkDynamic.bip and network.bip Objects from Bipartite Network Simulations
+#'
+#' @description Extracts the \code{networkDynamic.bip} object from a either a bipartite
+#'              network epidemic model object generated with \code{netsim.bip} or a bipartite
+#'              network diagnostic simulation generated with \code{netdx}, with the option to
+#'              collapse the extracted \code{networkDynamic.bip} object down to a static
+#'              \code{network.bip} object.
+#'
+#' @param x An \code{EpiModel} object of class \code{\link{netsim.bip}} or
+#'        \code{\link{netdx.bip}}.
+#' @param sim Simulation number of extracted network.
+#' @param network Network number, for \code{netsim.bip} objects with multiple
+#'        overlapping networks (advanced use, and not applicable to \code{netdx.bip}
+#'        objects).
+#' @param collapse If \code{TRUE}, collapse the \code{networkDynamic.bip} object to
+#'        a static \code{network.bip} object at a specified time step.
+#' @param at If \code{collapse} is \code{TRUE}, the time step at which the
+#'        extracted network should be collapsed.
+#'
+#' @details
+#' This function requires that the \code{networkDynamic.bip} object is saved during the
+#' network simulation while running either \code{\link{netsim.bip}} or \code{\link{netdx.bip}}.
+#' For the former, that is specified with the \code{save.network} parameter in
+#' \code{\link{control.net.bip}}. For the latter, that is specified with the
+#' \code{keep.tedgelist} parameter directly in \code{\link{netdx.bip}}.
+#'
+#' @keywords extract
+#' @export
+#'
+#' @examples
+#' # Set up network and TERGM formiula
+#' nw <- network.initialize.bip(n = 100, bipartite = 50, directed = FALSE)
+#' formation <- ~edges
+#' target.stats <- 50
+#' coef.diss <- dissolution_coefs.bip(dissolution = ~offset(edges), duration = 20)
+#'
+#' # Estimate the model
+#' est <- netest.bip(nw, formation, target.stats, coef.diss)
+#'
+#' # Run diagnostics, saving the networkDynamic objects
+#' dx <- netdx.bip(est, nsteps = 10, nsims = 3, keep.tnetwork = TRUE, verbose = FALSE)
+#'
+#' # Extract the network for simulation 2 from dx object
+#' get_network.bip(dx, sim = 2)
+#'
+#' # Extract and collapse the network from simulation 1 at time step 5
+#' get_network.bip(dx, collapse = TRUE, at = 5)
+#'
+#' # Parameterize the epidemic model, and simulate it
+#' param <- param.net.bip(inf.prob = 0.3, inf.prob.m2 = 0.15)
+#' init <- init.net.bip(i.num = 10, i.num.m2 = 10)
+#' control <- control.net.bip(type = "SI", nsteps = 10, nsims = 3, verbose = FALSE)
+#' mod <- netsim.bip(est, param, init, control)
+#'
+#' # Extract the network for simulation 2 from mod object
+#' get_network.bip(mod, sim = 2)
+#'
+#' ## Extract and collapse the network from simulation 1 at time step 5
+#' get_network.bip(mod, collapse = TRUE, at = 5)
+#'
+get_network.bip <- function(x, sim = 1, network = 1, collapse = FALSE, at) {
+
+  ## Warnings and checks ##
+  if (!(class(x) %in% c("netsim", "netdx"))) {
+    stop("x must be of class netsim or netdx", call. = FALSE)
+  }
+
+  nsims <- ifelse(class(x) == "netsim", x$control$nsims, x$nsims)
+  if (sim > nsims) {
+    stop("Specify sim between 1 and ", nsims, call. = FALSE)
+  }
+
+  if (class(x) == "netsim") {
+    if (x$control$save.network == FALSE || is.null(x$network)) {
+      stop("Network object not saved in netsim object, check control.net settings",
+           call. = FALSE)
+    }
+  } else if (class(x) == "netdx") {
+    if (is.null(x$network)) {
+      stop("Network object not saved in netdx object, check keep.tnetwork parameter",
+           call. = FALSE)
+    }
+  }
+
+  if (class(x) == "netsim") {
+    if (network > x$control$num.nw) {
+      stop("Specify network between 1 and ", x$control$num.nw, call. = FALSE)
+    }
+  }
+
+  nsteps <- ifelse(class(x) == "netsim", x$control$nsteps, x$nsteps)
+  if (collapse == TRUE && (missing(at) || at > nsteps)) {
+    stop("Specify collapse time step between 1 and ", nsteps,
+         call. = FALSE)
+  }
+
+  ## Extraction ##
+  if (class(x) == "netsim") {
+    if (x$control$num.nw == 1) {
+      out <- x$network[[sim]]
+    } else {
+      out <- x$network[[sim]][[network]]
+    }
+  } else if (class(x) == "netdx") {
+    out <- x$network[[sim]]
+  }
+
+  ## Collapsing
+  if (collapse == TRUE) {
+    out <- network.collapse(out, at = at)
+  }
+
+  return(out)
+}
+
+
+#' @title Extract Transmissions Matrix from Bipartite Network Epidemic Model
+#'
+#' @description Extracts the matrix of transmission data for each transmission
+#'              event that occured within a bipartite network epidemic model.
+#'
+#' @param x An \code{EpiModel} object of class \code{\link{netsim.bip}}.
+#' @param sim Simulation number of extracted network.
+#'
+#' @return
+#' A data frame with the following columns
+#' \itemize{
+#'  \item \strong{at:} the time step at which the transmission occurred.
+#'  \item \strong{sus:} the ID number of the susceptible (newly infected) node.
+#'  \item \strong{inf:} the ID number of the infecting node.
+#'  \item \strong{infDur:} the duration of the infecting node's disease at the
+#'        time of the transmission.
+#'  \item \strong{transProb:} the probability of transmission per act.
+#'  \item \strong{actRate:} the rate of acts per unit time.
+#'  \item \strong{finalProb:} the final transmission probability for the
+#'        transmission event.
+#' }
+#'
+#' @keywords extract
+#' @export
+#'
+#' @examples
+#' ## Simulate SI epidemic on bipartite Bernoulli random graph
+#' nw <- network.initialize.bip(n = 100, bipartite = 50, directed = FALSE)
+#' formation <- ~edges
+#' target.stats <- 50
+#' coef.diss <- dissolution_coefs.bip(dissolution = ~offset(edges), duration = 20)
+#' est <- netest.bip(nw, formation, target.stats, coef.diss, verbose = FALSE)
+#' param <- param.net.bip(inf.prob = 0.3, inf.prob.m2 = 0.15)
+#' init <- init.net.bip(i.num = 10, i.num.m2 = 10)
+#' control <- control.net.bip(type = "SI", nsteps = 10, nsims = 3, verbose = FALSE)
+#' mod <- netsim.bip(est, param, init, control)
+#'
+#' ## Extract the transmission matrix from simulation 2
+#' get_transmat.bip(mod, sim = 2)
+#'
+get_transmat.bip <- function(x, sim = 1) {
+
+  ## Warnings and checks
+  if (class(x) != "netsim") {
+    stop("x must be of class netsim", call. = FALSE)
+  }
+
+  if (sim > x$control$nsims) {
+    stop("Specify sim between 1 and ", x$control$nsims, call. = FALSE)
+  }
+
+  if (x$control$save.transmat == FALSE || is.null(x$stats$transmat)) {
+    stop("transmat not saved in netsim object, check control.net settings",
+         call. = FALSE)
+  }
+
+  ## Extraction
+  out <- x$stats$transmat[[sim]]
+  out <- as.data.frame(out)
+  class(out) <- c("transmat", class(out))
+  return(out)
+}
+
+
+#' @title Extract Network Statistics from netsim.bip or netdx.bip Object
+#'
+#' @description Extracts a data frame of network statistics from a network
+#'              epidemic model simulated with \code{netsim.bip} or a network diagnostics
+#'              object simulated with \code{netdx.bip}.
+#'
+#' @param x An \code{EpiModel} object of class \code{\link{netsim.bip}} or
+#'        \code{\link{netdx.bip}}.
+#' @param sim A vector of simulation numbers from the extracted object
+#' @param network Network number, for \code{netsim.bip} objects with multiple
+#'        overlapping networks (advanced use, and not applicable to \code{netdx.bip}
+#'        objects).
+#'
+#' @keywords extract
+#' @export
+#'
+#' @examples
+#' # Bipartite Bernoulli random graph TERGM
+#' nw <- network.initialize.bip(n = 100, bipartite = 50, directed = FALSE)
+#' formation <- ~edges
+#' target.stats <- 50
+#' coef.diss <- dissolution_coefs.bip(dissolution = ~offset(edges), duration = 20)
+#' est <- netest.bip(nw, formation, target.stats, coef.diss, verbose = FALSE)
+#'
+#' dx <- netdx.bip(est, nsim = 3, nsteps = 10, verbose = FALSE,
+#'             nwstats.formula = ~edges + isolates)
+#' get_nwstats.bip(dx)
+#' get_nwstats.bip(dx, sim = 1)
+#'
+#' # SI epidemic model
+#' param <- param.net.bip(inf.prob = 0.3, inf.prob.m2 = 0.15)
+#' init <- init.net.bip(i.num = 10, i.num.m2 = 10)
+#' control <- control.net.bip(type = "SI", nsteps = 10, nsims = 3,
+#'                        nwstats.formula = ~edges + meandeg + degree(0:5),
+#'                        verbose = FALSE)
+#' mod <- netsim.bip(est, param, init, control)
+#'
+#' # Extract the network statistics from all or sets of simulations
+#' get_nwstats.bip(mod)
+#' get_nwstats.bip(mod, sim = 2)
+#' get_nwstats.bip(mod, sim = c(1, 3))
+#'
+#' # On the fly summary stats
+#' summary(get_nwstats.bip(mod))
+#' colMeans(get_nwstats.bip(mod))
+#'
+get_nwstats.bip <- function(x, sim, network = 1) {
+
+  ## Warnings and checks ##
+  if (!(class(x) %in% c("netsim.bip", "netdx.bip"))) {
+    stop("x must be of class netsim.bip or netdx.bip", call. = FALSE)
+  }
+
+  if (class(x) == "netsim.bip") {
+    nsims <- x$control$nsims
+    nsteps <- x$control$nsteps
+  } else {
+    if (x$dynamic == TRUE) {
+      nsims <- x$nsims
+      nsteps <- x$nsteps
+    } else {
+      nsims <- 1
+      nsteps <- x$nsims
+    }
+  }
+
+  if (missing(sim)) {
+    sim <- 1:nsims
+  }
+  if (max(sim) > nsims) {
+    stop("Specify sims less than or equal to ", nsims, call. = FALSE)
+  }
+
+  if (class(x) == "netsim.bip") {
+    if (x$control$save.nwstats == FALSE || is.null(x$stats$nwstats)) {
+      stop("Network statistics not saved in netsim.bip object, check control.net.bip settings",
+           call. = FALSE)
+    }
+    if (network > x$control$num.nw) {
+      stop("Specify network between 1 and ", x$control$num.nw, call. = FALSE)
+    }
+  }
+
+  ## Extraction
+  if (class(x) == "netsim.bip") {
+    if (x$control$num.nw == 1) {
+      out <- x$stats$nwstats[sim]
+    } else {
+      out <- lapply(x$stats$nwstats, function(n) n[[network]])
+      out <- out[sim]
+    }
+  } else if (class(x) == "netdx.bip") {
+    out <- x$stats[sim]
+  }
+
+  out <- as.data.frame(do.call("rbind", out))
+  out$time <- rep(1:min(nsteps, nrow(out)), length(sim))
+  out$sim <- rep(sim, each = min(nsteps, nrow(out)))
+  row.names(out) <- 1:nrow(out)
+  out <- out[, c((ncol(out)-1):ncol(out), 1:(ncol(out)-2))]
+
+  if (class(x) == "netdx.bip" && x$dynamic == FALSE) {
+    out <- out[, -2]
+    names(out)[1] <- "sim"
+  }
+
+  return(out)
+}
+
+
+#' @title Extract Bipartite Network Model Parameters
+#'
+#' @description Extracts a list of network model parameters saved in the
+#'              initialization module.
+#'
+#' @param x Master data object used in \code{netsim.bip} simulations.
+#' @param network Network number, for simulations with multiple networks
+#'        representing the population.
+#'
+#' @keywords extract internal
+#' @export
+#'
+get_nwparam.bip <- function(x, network = 1) {
+  x$nwparam[[network]]
+}
+
+
+#' @title Extract Network Simulations
+#'
+#' @description Subsets the entire \code{netsim.bip} object to a subset of
+#'              simulations, essentially functioning like a reverse of
+#'              \code{merge}.
+#'
+#' @param x An object of class \code{netsim.bip}.
+#' @param sims A numeric vector of simulation numbers to retain in the output object,
+#'        or \code{"mean"} which selects the one simulation with the value of the
+#'        variable specified in \code{var} closest to the mean of \code{var}
+#'        across all simulations.
+#' @param var A character vector of variables to retain from \code{x} if \code{sims}
+#'        is a numeric vector, or a single variable name for selecting the average
+#'        simulation from the set if \code{sims = "mean"}.
+#'
+#' @keywords extract
+#' @export
+#'
+#' @examples
+#' # Network model estimation
+#' nw <- network.initialize.bip(n = 100, directed = FALSE)
+#' formation <- ~edges
+#' target.stats <- 50
+#' coef.diss <- dissolution_coefs.bipdissolution = ~offset(edges), duration = 20)
+#' est1 <- netest.bip(nw, formation, target.stats, coef.diss, verbose = FALSE)
+#'
+#' # Epidemic model
+#' param <- param.net.bip(inf.prob = 0.3)
+#' init <- init.net.bip(i.num = 10)
+#' control <- control.net.bip(type = "SI", nsteps = 10, nsims = 3, verbose.int = 0)
+#' mod1 <- netsim.bip(est1, param, init, control)
+#'
+#' # Get sim 2
+#' sim2 <- get_sims.bip(mod1, sims = 2)
+#'
+#' # Get sims 2 and 3 and keep only a subset of variables
+#' sim2.small <- get_sims.bip(mod1, sims = 2:3, var = c("i.num", "si.flow"))
+#'
+#' # Extract the mean simulation for the variable i.num
+#' sim.mean <- get_sims.bip(mod1, sims = "mean", var = "i.num")
+#'
+get_sims.bip <- function(x, sims, var) {
+
+  if (class(x) != "netsim.bip") {
+    stop("x must be of class netsim.bip", call. = FALSE)
+  }
+
+  nsims <- x$control$nsims
+
+  if (missing(sims)) {
+    stop("Specify sims as a vector of simulations or \"mean\" ", call. = FALSE)
+  }
+  if (sims == "mean" && (missing(var) || length(var) > 1)) {
+    stop("If sims == 'mean' then var must be a single varible name", call. = FALSE)
+  }
+
+  if (length(sims) == 1 && sims == "mean") {
+    d <- tail(x$epi[[var]], 1)
+    md <- mean(as.numeric(d))
+    sims <- which.min(abs(d - md))
+  }
+
+  if (sims != "mean" && max(sims) > nsims) {
+    stop("Maximum sims value for this object is ", nsims, call. = FALSE)
+  }
+
+  delsim <- setdiff(1:nsims, sims)
+  out <- x
+  if (length(delsim) > 0) {
+    for (i in seq_along(out$epi)) {
+      out$epi[[i]] <- out$epi[[i]][, -delsim, drop = FALSE]
+    }
+    if (!is.null(out$network)) {
+      out$network[delsim] <- NULL
+    }
+    if (!is.null(out$stats$nwstats)) {
+      out$stats$nwstats[delsim] <- NULL
+    }
+    if (!is.null(out$stats$transmat)) {
+      out$stats$transmat[delsim] <- NULL
+    }
+    if (!is.null(out$control$save.other)) {
+      oname <- out$control$save.other
+      for (i in seq_along(oname)) {
+        out[[oname[i]]][delsim] <- NULL
+      }
+    }
+  }
+  out$control$nsims <- length(sims)
+
+  if (!missing(var) && var != "mean") {
+    match.vars <- which(var %in% names(x$epi))
+    out$epi <- out$epi[match.vars]
+  }
+
+  return(out)
+}
+
