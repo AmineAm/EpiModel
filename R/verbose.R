@@ -218,3 +218,167 @@ verbose.net <- function(x, type, s = 1, at = 2) {
   }
 
 }
+
+
+
+#' @title Progress Print Module for Deterministic Bipartite Compartmental Models
+#'
+#' @description This function prints progress from deterministic bipartite compartmental
+#'              models simulated with \code{dcm.bip} to the console.
+#'
+#' @param x If the \code{type} is "startup", then an object of class
+#'        \code{control.icm.bip}, otherwise the all master data object in \code{icm.bip}
+#'        simulations.
+#' @param type Progress type, either of "startup" for starting messages before
+#'        all simulations, or "progress" for time step specific messages.
+#' @param s Current simulation number, if type is "progress".
+#'
+#' @export
+#' @keywords internal
+#'
+verbose.dcm.bip <- function(x, type, s = 1) {
+
+  if (type == "startup") {
+    if (x$verbose == TRUE & x$nruns > 1) {
+      cat("\n* Starting DCM Simulation")
+    }
+  }
+
+  if (type == "progress") {
+    if (x$verbose == TRUE & x$nruns > 1) {
+      cat("\nRun = ", s, "/", x$nruns, sep = "")
+    }
+  }
+
+}
+
+#' @title Progress Print Module for Stochastic Bipartite Individual Contact Models
+#'
+#' @description This function prints progress from stochastic individual contact
+#'              models simulated with \code{icm.bip} to the console.
+#'
+#' @param x If the \code{type} is "startup", then an object of class
+#'        \code{control.icm.bip}, otherwise the all master data object in \code{icm.bip}
+#'        simulations.
+#' @param type Progress type, either of "startup" for starting messages before
+#'        all simulations, or "progress" for time step specific messages.
+#' @param s Current simulation number, if type is "progress".
+#' @param at Current time step, if type is "progress".
+#'
+#' @export
+#' @keywords internal
+#'
+verbose.icm.bip <- function(x, type, s = 1, at = 2) {
+
+  if (type == "startup") {
+    if (x$verbose == TRUE) {
+      cat("\n* Starting ICM Simulation")
+    }
+  }
+
+  if (type == "progress") {
+    if (x$control$verbose == TRUE) {
+      if (x$control$verbose.int == 0 && at == x$control$nsteps) {
+        cat("\nSim = ", s, "/", x$control$nsims, sep = "")
+      }
+      if (x$control$verbose.int > 0 && (at %% x$control$verbose.int == 0)) {
+        cat("\014")
+        cat("\nEpidemic Simulation")
+        cat("\n----------------------------")
+        cat("\nSimulation: ", s, "/", x$control$nsims, sep = "")
+        cat("\nTimestep: ", at, "/", x$control$nsteps, sep = "")
+        cat("\nIncidence:", x$epi$si.flow[at] + x$epi$si.flow.g2[at])
+
+        if (x$control$type == "SIR") {
+          cat("\nRecoveries:", x$epi$ir.flow[at] +
+                x$epi$ir.flow.g2[at])
+        }
+        if (x$control$type == "SIS") {
+          cat("\nRecoveries:", x$epi$is.flow[at] +
+                x$epi$is.flow.g2[at])
+        }
+        cat("\nPrevalence:", x$epi$i.num[at] + x$epi$i.num.g2[at])
+
+        cat("\nPopulation:", sum(x$attr$active == 1))
+        if (x$param$vital == TRUE) {
+          cat("\nArrivals:", x$epi$a.flow[at] + x$epi$a.flow.g2[at])
+          cat("\nDepartures, susceptible:", x$epi$ds.flow[at] +
+                x$epi$ds.flow.g2[at])
+          cat("\nDepartures, infected:", x$epi$di.flow[at] +
+                x$epi$di.flow.g2[at])
+          if (x$control$type == "SIR") {
+            cat("\nDepartures, recovered:", x$epi$dr.flow[at] +
+                  x$epi$dr.flow.g2[at])
+          }
+        }
+        cat("\n----------------------------")
+      }
+    }
+  }
+
+}
+
+
+#' @title Progress Print Module for Stochastic Bipartite Network Models
+#'
+#' @description This function prints progress from stochastic network models
+#'              simulated with \code{netsim.bip} to the console.
+#'
+#' @param x If the \code{type} is "startup", then an object of class
+#'        \code{control.net.bip}, otherwise the all master data object in \code{netsim.bip}
+#'        simulations.
+#' @param type Progress type, either of "startup" for starting messages before
+#'        all simulations, or "progress" for time step specific messages.
+#' @param s Current simulation number, if type is "progress"
+#' @param at Current time step, if type is "progress"
+#'
+#' @export
+#' @keywords internal
+#'
+verbose.net.bip <- function(x, type, s = 1, at = 2) {
+
+  if (type == "startup" && x$ncores == 1) {
+    if (x$verbose == TRUE) {
+      cat("\n* Starting Network Simulation")
+    }
+  }
+
+  if (type == "progress" && x$control$ncores == 1) {
+    if (x$control$verbose == TRUE) {
+      if (x$control$verbose.int == 0 && at == x$control$nsteps) {
+        cat("\nSim = ", s, "/", x$control$nsims, sep = "")
+      }
+      if (x$control$verbose.int > 0 && (at %% x$control$verbose.int == 0)) {
+        cat("\014")
+        cat("\nEpidemic Simulation")
+        cat("\n----------------------------")
+        cat("\nSimulation: ", s, "/", x$control$nsims, sep = "")
+        cat("\nTimestep: ", at, "/", x$control$nsteps, sep = "")
+        cat("\nIncidence:", x$epi$si.flow[at] + x$epi$si.flow.m2[at])
+        if (x$control$type == "SIR") {
+          cat("\nRecoveries:", x$epi$ir.flow[at] +
+                x$epi$ir.flow.m2[at])
+        }
+        if (x$control$type == "SIS") {
+          cat("\nRecoveries:", x$epi$is.flow[at] +
+                x$epi$is.flow.m2[at])
+        }
+        cat("\nPrevalence:", x$epi$i.num[at] + x$epi$i.num.m2[at])
+        cat("\nPopulation:", sum(x$attr$active == 1))
+        if (x$param$vital == TRUE) {
+          cat("\nArrivals:", x$epi$a.flow[at] + x$epi$a.flow.m2[at])
+          cat("\nDepartures, susceptible:", x$epi$ds.flow[at] +
+                x$epi$ds.flow.m2[at])
+          cat("\nDepartures, infected:", x$epi$di.flow[at] +
+                x$epi$di.flow.m2[at])
+          if (x$control$type == "SIR") {
+            cat("\nDepartures, recovered:", x$epi$dr.flow[at] +
+                  x$epi$dr.flow.m2[at])
+          }
+        }
+        cat("\n----------------------------")
+      }
+    }
+  }
+
+}
