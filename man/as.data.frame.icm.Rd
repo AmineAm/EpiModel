@@ -3,10 +3,14 @@
 \name{as.data.frame.icm}
 \alias{as.data.frame.icm}
 \alias{as.data.frame.netsim}
+\alias{as.data.frame.netsim.bip}
 \title{Extract Model Data for Stochastic Models}
 \usage{
 \method{as.data.frame}{icm}(x, row.names = NULL, optional = FALSE,
   out = "vals", sim, qval, ...)
+
+\method{as.data.frame}{netsim}(x, row.names = NULL, optional = FALSE,
+  out = "vals", sim, ...)
 
 \method{as.data.frame}{netsim}(x, row.names = NULL, optional = FALSE,
   out = "vals", sim, ...)

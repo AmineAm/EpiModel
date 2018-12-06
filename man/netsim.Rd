@@ -67,6 +67,7 @@ is listed in \code{\link{modules.net}}.
 }
 \examples{
 \dontrun{
+# (Need: Single Mode Example)
 ## Example 1: Independent SI Model
 # Network model estimation
 nw <- network.initialize(n = 100, bipartite = 50, directed = FALSE)

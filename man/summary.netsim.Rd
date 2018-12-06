@@ -25,7 +25,7 @@ measures are provided, so it is necessary to input a time of interest.
 }
 \examples{
 \dontrun{
-## Independent SI Model
+## Independent SI Model (Need Example)
 # Initialize network and set network model parameters
 nw <- network.initialize(n = 100, bipartite = 50, directed = FALSE)
 formation <- ~edges

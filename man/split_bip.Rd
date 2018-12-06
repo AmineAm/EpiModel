@@ -7,7 +7,7 @@
 split_bip(dat, var, val, nCurrM1, nCurrM2, nArrivals, nArrivalsM2)
 }
 \arguments{
-\item{dat}{Master data object passed through \code{netsim} simulations.}
+\item{dat}{Master data object passed through \code{netsim.bip} simulations.}
 
 \item{var}{Variable to update.}
 

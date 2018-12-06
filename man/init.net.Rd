@@ -6,20 +6,37 @@
 \usage{
 init.net(i.num, r.num, i.num.m2, r.num.m2, status.vector, infTime.vector,
   ...)
+
+init.net(i.num, r.num, i.num.m2, r.num.m2, status.vector, infTime.vector,
+  ...)
 }
 \arguments{
-\item{i.num}{Number of initial infected. For bipartite models, this is the
-number of initial mode 1 infected.}
+\item{i.num}{Number of initial infected.}
 
-\item{r.num}{Number of initial recovered. For bipartite models, this is the
-number of initial mode 1 recovered. This parameter is only used for
+\item{r.num}{Number of initial recovered. This parameter is only used for
 the \code{SIR} model type.}
 
-\item{i.num.m2}{Number of initial infected in mode 2. This parameter is only
-used for bipartite models.}
+\item{i.num.m2}{Number of initial infected in mode 2.}
 
 \item{r.num.m2}{Number of initial recovered in mode 2. This parameter is
 only used for bipartite \code{SIR} models.}
+
+\item{status.vector}{A vector of length equal to the size of the input network,
+containing the status of each node. Setting status here overrides any
+inputs passed in the \code{.num} arguments.}
+
+\item{infTime.vector}{A vector of length equal to the size of the input network,
+containing the (historical) time of infection for each of those nodes
+with a current status of \code{"i"}. Can only be used if \code{status.vector}
+is used, and must contain \code{NA} values for any nodes whose status
+is not \code{"i"}.}
+
+\item{...}{Additional initial conditions passed to model.}
+
+\item{i.num}{Number of initial mode 1 infected.}
+
+\item{r.num}{Number of initial mode 1 recovered. This parameter is only used for
+the \code{SIR} model type.}
 
 \item{status.vector}{A vector of length equal to the size of the input network,
 containing the status of each node. Setting status here overrides any
@@ -36,10 +53,20 @@ is not \code{"i"}.}
 \description{
 Sets the initial conditions for stochastic network models
              simulated with \code{netsim}.
+
+Sets the initial conditions for stochastic network models
+             simulated with \code{netsim}.
 }
 \details{
 The initial conditions for a model solved with \code{\link{netsim}} should be
 input into the \code{init.net} function. This function handles initial
+conditions for both base models and new modules. For an overview of
+specifying initial conditions across a variety of base network models,
+consult the \href{http://statnet.github.io/tut/BasicNet.html}{Basic Network
+Models} tutorial.
+
+The initial conditions for a model solved with \code{\link{netsim.bip}} should be
+input into the \code{init.net.bip} function. This function handles initial
 conditions for both base models and new modules. For an overview of
 specifying initial conditions across a variety of base network models,
 consult the \href{http://statnet.github.io/tut/BasicNet.html}{Basic Network
@@ -54,10 +81,22 @@ infTime[which(status == "i")] <- -rgeom(sum(status == "i"), prob = 0.01) + 2
 
 init.net(status.vector = status, infTime.vector = infTime)
 
+# Example of using status.vector and infTime.vector together
+n <- 100
+status <- sample(c("s", "i"), size = n, replace = TRUE, prob = c(0.8, 0.2))
+infTime <- rep(NA, n)
+infTime[which(status == "i")] <- -rgeom(sum(status == "i"), prob = 0.01) + 2
+
+init.net(status.vector = status, infTime.vector = infTime)
+
 }
 \seealso{
 Use \code{\link{param.net}} to specify model parameters and
          \code{\link{control.net}} to specify the control settings. Run the
          parameterized model with \code{\link{netsim}}.
+
+Use \code{\link{param.net.bip}} to specify model parameters and
+         \code{\link{control.net.bip}} to specify the control settings. Run the
+         parameterized model with \code{\link{netsim.bip}}.
 }
 \keyword{parameterization}

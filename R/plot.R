@@ -490,6 +490,7 @@ plot.dcm <- function(x, y, popfrac = FALSE, run, col, lwd, lty, alpha = 0.9,
 #' plot(mod2, y = "si.flow", mean.smooth = TRUE, grid = TRUE)
 #' plot(mod2, y = "si.flow", qnts.smooth = FALSE, qnts = 1)
 #'
+
 plot.icm <- function(x, y, popfrac = FALSE, sim.lines = FALSE, sims, sim.col, sim.lwd,
                      sim.alpha, mean.line = TRUE, mean.smooth = TRUE,
                      mean.col, mean.lwd = 2, mean.lty = 1, qnts = 0.5, qnts.col,
@@ -683,6 +684,7 @@ plot.icm <- function(x, y, popfrac = FALSE, sim.lines = FALSE, sims, sim.col, si
     }
     if (missing(mean.lty)) {
       mean.lty <- rep(1, lcomp)
+    }
     draw_means(x, y, mean.smooth, mean.lwd, mean.pal, mean.lty)
   }
 
@@ -727,7 +729,10 @@ draw_qnts <- function(x, y, qnts, qnts.pal, qnts.smooth, loc = "epi") {
 
 
 draw_means <- function(x, y, mean.smooth, mean.lwd,
-                       mean.pal, mean.lty, loc = "epi") {
+                       mean.pal, mean.lty, loc = "epi", plot.means = 1, mean.min_max = "max") {
+
+  mean.min <- 1E10
+  mean.max <- -1E10
 
   lcomp <- length(y)
   nsims <- x$control$nsims
@@ -741,11 +746,22 @@ draw_means <- function(x, y, mean.smooth, mean.lwd,
     if (mean.smooth == TRUE) {
       mean.prev <- suppressWarnings(supsmu(x = 1:length(mean.prev), y = mean.prev))$y
     }
-    lines(mean.prev, lwd = mean.lwd[j],
-          col = mean.pal[j], lty = mean.lty[j])
+    if(plot.means == 1) {
+      lines(mean.prev, lwd = mean.lwd[j],
+            col = mean.pal[j], lty = mean.lty[j])
+    }
+    else {
+      mean.max[j] = max(mean.prev, na.rm = TRUE)
+      mean.min[j] = min(mean.prev, na.rm = TRUE)
+    }
   }
-
+  if(plot.means == 0 & mean.min_max == "max") {
+    return(max(mean.max))
+  } else if(plot.means == 0 & mean.min_max == "min") {
+    return(min(mean.min))
+  }
 }
+
 
 
 #' @title Plot Dynamic Network Model Diagnostics
@@ -2775,7 +2791,6 @@ varrow <- function(xbox, ybox, title, val, dir) {
     text(xbox + 10, ybox + 32.5, paste(title, val, sep = "="), cex = 0.8, pos = 4)
   }
 }
-
 
 # Main Exported Methods ---------------------------------------------------
 
@@ -5342,7 +5357,7 @@ mbox.bip <- function(x, y, title, val) {
   text(x + 10, y + 10, paste(title, "\n n=", val, sep = ""), cex = 0.9)
 }
 #  Horizontal arrow
-harrow <- function(xbox, ybox, title, val, dir) {
+harrow.bip <- function(xbox, ybox, title, val, dir) {
   if (dir == "right") {
     arrows(xbox + 20, ybox + 12, xbox + 35, lwd = 2, length = 0.15)
     text(xbox + 27.5, ybox + 17, paste(title, val, sep = "="), cex = 0.8)
@@ -5363,4 +5378,3 @@ varrow.bip <- function(xbox, ybox, title, val, dir) {
     text(xbox + 10, ybox + 32.5, paste(title, val, sep = "="), cex = 0.8, pos = 4)
   }
 }
-

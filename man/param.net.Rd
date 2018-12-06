@@ -5,13 +5,11 @@
 \title{Epidemic Parameters for Stochastic Network Models}
 \usage{
 param.net(inf.prob, inter.eff, inter.start, act.rate, rec.rate, a.rate,
-  ds.rate, di.rate, dr.rate, inf.prob.m2, rec.rate.m2, a.rate.m2,
-  ds.rate.m2, di.rate.m2, dr.rate.m2, ...)
+  ds.rate, di.rate, dr.rate, ...)
 }
 \arguments{
 \item{inf.prob}{Probability of infection per transmissible act between
-a susceptible and an infected person. In bipartite models, this is the
-probability of infection to the mode 1 nodes. This may also be a vector
+a susceptible and an infected person. This may also be a vector
 of probabilities, with each element corresponding to the probability
 in that time step of infection (see Time-Varying Parameters below).}
 
@@ -31,49 +29,20 @@ step of infection (see Time-Varying Parameters below).}
 
 \item{rec.rate}{Average rate of recovery with immunity (in \code{SIR} models)
 or re-susceptibility (in \code{SIS} models). The recovery rate is the
-reciprocal of the disease duration. For bipartite models, this is the
-recovery rate for mode 1 persons only. This parameter is only used for
+reciprocal of the disease duration. This parameter is only used for
 \code{SIR} and \code{SIS} models. This may also be a vector
 of rates, with each element corresponding to the rate in that time step
 of infection (see Time-Varying Parameters below).}
 
 \item{a.rate}{Arrival or entry rate. For one-mode models, the arrival rate is the
-rate of new arrivals per person per unit time. For bipartite models, the
-arrival rate may be parameterized as a rate per mode 1 person time (with
-mode 1 persons representing females), and with the \code{a.rate.g2}
-rate set as described below.}
+rate of new arrivals per person per unit time.}
 
-\item{ds.rate}{Departure or exit rate for susceptible. For bipartite models, it
-is the rate for the mode 1 susceptible only.}
+\item{ds.rate}{Departure or exit rate for susceptible.}
 
-\item{di.rate}{Departure or exit rate for infected. For bipartite models, it is
-the rate for the mode 1 infected only.}
+\item{di.rate}{Departure or exit rate for infected.}
 
-\item{dr.rate}{Departure or exit rate for recovered. For bipartite models, it is
-the rate for the mode 1 recovered only. This parameter is only used for
+\item{dr.rate}{Departure or exit rate for recovered. This parameter is only used for
 \code{SIR} models.}
-
-\item{inf.prob.m2}{Probability of transmission given a transmissible act
-between a susceptible mode 2 person and an infected mode 1 person.
-It is the probability of transmission to mode 2 members.}
-
-\item{rec.rate.m2}{Average rate of recovery with immunity (in \code{SIR} models)
-or re-susceptibility (in \code{SIS} models) for mode 2 persons. This
-parameter is only used for bipartite \code{SIR} and \code{SIS} models.}
-
-\item{a.rate.m2}{Arrival or entry rate for mode 2. This may either be specified
-numerically as the rate of new arrivals per mode 2 persons per unit time,
-or as \code{NA} in which case the mode 1 rate, \code{a.rate}, governs
-the mode 2 rate. The latter is used when, for example, the first mode
-is conceptualized as female, and the female population size determines
-the arrival rate. Such arrivals are evenly allocated between the two modes.}
-
-\item{ds.rate.m2}{Departure or exit rate for mode 2 susceptible.}
-
-\item{di.rate.m2}{Departure or exit rate for mode 2 infected.}
-
-\item{dr.rate.m2}{Departure or exit rate for mode 2 recovered. This parameter is
-only used for \code{SIR} model types.}
 
 \item{...}{Additional arguments passed to model.}
 }

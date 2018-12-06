@@ -73,6 +73,7 @@
 #' mod3 <- icm(param, init, control)
 #' mod3
 #' plot(mod3)
+#'}
 #'
 
 icm <- function(param, init, control) {

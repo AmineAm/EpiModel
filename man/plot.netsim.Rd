@@ -172,7 +172,7 @@ in which the prevalence is lowest, and \code{"max"} to plot the simulation
 in which the prevalence is highest.
 }
 \examples{
-## Independent SI Model
+## Independent SI Model (Need Example)
 # Initialize network and set network model parameters
 nw <- network.initialize(n = 100, bipartite = 50, directed = FALSE)
 formation <- ~edges

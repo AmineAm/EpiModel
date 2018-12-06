@@ -24,6 +24,27 @@ writing their own functions. These module functions are not shown
 on the help index since they are not called directly by the end-user. To
 understand these functions in more detail, review the separate help pages
 listed below.
+
+Stochastic bipartite network models of infectious disease in EpiModel require
+statistical modeling of networks, simulation of those networks forward through time,
+and simulation of epidemic dynamics on top of those evolving networks. The
+\code{\link{netsim.bip}} function handles both the network and epidemic simulation
+tasks. Within this function are a series of modules that initialize the
+simulation and then simulate new infections, recoveries, and demographics on
+the network. Modules also handle the resimulation of the network and some
+bookkeeping calculations for disease prevalence.
+
+Writing original network models that expand upon our "base" model set will
+require modifying the existing modules or adding new modules to the workflow
+in \code{\link{netsim.bip}}. The existing modules may be used as a template for
+replacement or new modules.
+
+This help page provides an orientation to these module functions, in the order
+in which they are used within \code{\link{netsim.bip}}, to help guide users in
+writing their own functions. These module functions are not shown
+on the help index since they are not called directly by the end-user. To
+understand these functions in more detail, review the separate help pages
+listed below.
 }
 \section{Initialization Module}{
 
@@ -36,6 +57,18 @@ function calls, these are reset at the beginning of each individual simulation.
        conditions passed in \code{\link{init.net}}), and simulates a first
        time step of the networks given the network model fit from
        \code{\link{netest}}.
+}
+
+
+This function sets up nodal attributes, like disease status, on the network
+at the starting time step of disease simulation, \eqn{t_1}. For multiple-simulation
+function calls, these are reset at the beginning of each individual simulation.
+\itemize{
+ \item \code{\link{initialize.net.net}}: sets up the master data structure used in
+       the simulation, initializes which nodes are infected (via the initial
+       conditions passed in \code{\link{init.net}}), and simulates a first
+       time step of the networks given the network model fit from
+       \code{\link{netest.bip}}.
 }
 }
 
@@ -56,6 +89,23 @@ also calculate summary flow measures such as disease incidence.
        state (for SIS models), as a function of the recovery rate parameters
        specified in \code{\link{param.net}}.
 }
+
+
+The main disease simulation occurs at each time step given the current state
+of the network at that step. Infection of nodes is simulated as a function of
+attributes of the nodes and the edges. Recovery of nodes is likewise simulated
+as a function of nodal attributes of those infected nodes. These functions
+also calculate summary flow measures such as disease incidence.
+\itemize{
+ \item \code{\link{infection.net.bip}}: simulates disease transmission given an
+       edgelist of discordant partnerships by calculating the relevant
+       transmission and act rates for each edge, and then updating the nodal
+       attributes and summary statistics.
+ \item \code{\link{recovery.net.bip}}: simulates recovery from infection either to
+       a lifelong immune state (for SIR models) or back to the susceptible
+       state (for SIS models), as a function of the recovery rate parameters
+       specified in \code{\link{param.net.bip}}.
+}
 }
 
 \section{Demographic Modules}{
@@ -71,6 +121,22 @@ step to account for the nodal changes affecting the edges.
        involve deactivating nodes, which are then deleted from the network
        if \code{delete.nodes=TRUE} is set in \code{\link{control.net}}.
  \item \code{\link{arrivals.net}}: randomly simulates new arrivals into the network
+       given the current population size and the arrival rate specified in the
+       \code{a.rate} parameters. This involves adding new nodes into the network.
+}
+
+
+Demographics such as arrival and departure processes are simulated at each time
+step to update entries into and exits from the network. These are used in
+dependent network models, in which the network is resimulated at each time
+step to account for the nodal changes affecting the edges.
+\itemize{
+ \item \code{\link{departures.net.bip}}: randomly simulates departure for nodes given
+       their disease status (susceptible, infected, recovered), and their
+       mode-specific departure rates specified in \code{\link{param.net.bip}}. departures
+       involve deactivating nodes, which are then deleted from the network
+       if \code{delete.nodes=TRUE} is set in \code{\link{control.net.bip}}.
+ \item \code{\link{arrivals.net.bip}}: randomly simulates new arrivals into the network
        given the current population size and the arrival rate specified in the
        \code{a.rate} parameters. This involves adding new nodes into the network.
 }
@@ -91,6 +157,21 @@ and exits), and the disease status of the nodes.
        in \code{\link{netest}}. This function also deletes the inactive nodes
        if the \code{delete.nodes} control is set to \code{TRUE}.
 }
+
+
+In dependent network models, the network object is resimulated at each time
+step to account for changes in the size of the network (changed through entries
+and exits), and the disease status of the nodes.
+\itemize{
+ \item \code{\link{edges_correct.bip}}: adjusts the edges coefficient of a network
+       model to account for changes in the population size due to entries and
+       exits. The default behavior is to preserve the mean degree (average
+       number of edges per person) in response to change population sizes.
+ \item \code{\link{resim_nets.bip}}: resimulates the network object one time step
+       forward given the set of formation and dissolution coefficients estimated
+       in \code{\link{netest.bip}}. This function also deletes the inactive nodes
+       if the \code{delete.nodes} control is set to \code{TRUE}.
+}
 }
 
 \section{Bookkeeping Module}{
@@ -103,6 +184,18 @@ summary epidemiological statistics used in the model output analysis.
        nodes in the network. If the \code{epi.by} control is used, it calculates
        these statistics by a set of specified nodal attributes.
  \item \code{\link{verbose.net}}: summarizes the current state of the simulation
+       and prints this to the console.
+}
+
+
+Network simulations require bookkeeping at each time step to calculate the
+summary epidemiological statistics used in the model output analysis.
+\itemize{
+ \item \code{\link{get_prev.net.bip}}: calculates the number in each disease state
+       (susceptible, infected, recovered) at each time step for those active
+       nodes in the network. If the \code{epi.by} control is used, it calculates
+       these statistics by a set of specified nodal attributes.
+ \item \code{\link{verbose.net.bip}}: summarizes the current state of the simulation
        and prints this to the console.
 }
 }

@@ -8,6 +8,8 @@
 \usage{
 is.transmat(x)
 
+is.transmat(x)
+
 get_transmat(x, sim = 1)
 }
 \arguments{

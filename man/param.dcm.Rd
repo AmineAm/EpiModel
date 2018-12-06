@@ -5,8 +5,7 @@
 \title{Epidemic Parameters for Deterministic Compartmental Models}
 \usage{
 param.dcm(inf.prob, inter.eff, inter.start, act.rate, rec.rate, a.rate,
-  ds.rate, di.rate, dr.rate, inf.prob.g2, act.rate.g2, rec.rate.g2,
-  a.rate.g2, ds.rate.g2, di.rate.g2, dr.rate.g2, balance, ...)
+  ds.rate, di.rate, dr.rate, ...)
 }
 \arguments{
 \item{inf.prob}{Probability of infection per transmissible act between
@@ -22,62 +21,22 @@ exposure.}
 the number of time steps specified in the model. This will default to
 1 if the \code{inter.eff} is defined but this parameter is not.}
 
-\item{act.rate}{Average number of transmissible acts per person per unit time.
-For two-group models, this is the number of acts per group 1 persons
-per unit time; a balance between the acts in groups 1 and 2 is necessary,
-and set using the \code{balance} parameter (see details).}
+\item{act.rate}{Average number of transmissible acts per person per unit time.}
 
 \item{rec.rate}{Average rate of recovery with immunity (in \code{SIR} models)
 or re-susceptibility (in \code{SIS} models). The recovery rate is the
-reciprocal of the disease duration. For two-group models, this is the
-recovery rate for group 1 persons only. This parameter is only used for
+reciprocal of the disease duration. This parameter is only used for
 \code{SIR} and \code{SIS} models.}
 
 \item{a.rate}{Arrival or entry rate. For one-group models, the arrival rate is the
-rate of new arrivals per person per unit time. For two-group models, the
-arrival rate may be parameterized as a rate per group 1 person time (with
-group 1 persons representing females), and with the \code{a.rate.g2}
-rate set as described below.}
+rate of new arrivals per person per unit time.}
 
-\item{ds.rate}{Departure or exit rate for susceptible. For two-group models, it
-is the rate for the group 1 susceptible only.}
+\item{ds.rate}{Departure or exit rate for susceptible.}
 
-\item{di.rate}{Departure or exit rate for infected. For two-group models, it is
-the rate for the group 1 infected only.}
+\item{di.rate}{Departure or exit rate for infected.}
 
-\item{dr.rate}{Departure or exit rate for recovered. For two-group models, it is
-the rate for the group 1 recovered only. This parameter is only used for
+\item{dr.rate}{Departure or exit rate for recovered. This parameter is only used for
 \code{SIR} models.}
-
-\item{inf.prob.g2}{Probability of infection per transmissible act
-between a susceptible group 2 person and an infected group 1 person.
-It is the probability of infection to group 2 members.}
-
-\item{act.rate.g2}{Average number of transmissible acts per group 2 person per
-unit time; a balance between the acts in groups 1 and 2 is necessary,
-and set using the \code{balance} parameter (see details).}
-
-\item{rec.rate.g2}{Average rate of recovery with immunity (in \code{SIR} models)
-or re-susceptibility (in \code{SIS} models) for group 2 persons. This
-parameter is only used for two-group \code{SIR} and \code{SIS} models.}
-
-\item{a.rate.g2}{Arrival or entry rate for group 2. This may either be specified
-numerically as the rate of new arrivals per group 2 persons per unit time,
-or as \code{NA} in which case the group 1 rate, \code{a.rate}, governs
-the group 2 rate. The latter is used when, for example, the first group
-is conceptualized as female, and the female population size determines
-the arrival rate. Such arrivals are evenly allocated between the two groups.}
-
-\item{ds.rate.g2}{Departure or exit rate for group 2 susceptible.}
-
-\item{di.rate.g2}{Departure or exit rate for group 2 infected.}
-
-\item{dr.rate.g2}{Departure or exit rate for group 2 recovered. This parameter is
-only used for \code{SIR} model types.}
-
-\item{balance}{For two-group models, balance the \code{act.rate} to the rate
-set for group 1 (with \code{balance="g1"}) or group 2 (with
-\code{balance="g2"}). See details.}
 
 \item{...}{Additional arguments passed to model.}
 }
@@ -103,19 +62,6 @@ population (e.g., men and women). Specifying any group two parameters (those
 with a \code{.g2}) implies the simulation of a two-group model. All the
 parameters for a desired model type must be specified, even if they are zero.
 }
-\section{Act Balancing}{
-
-In two-group models, a balance between the number of acts for group 1 members
-and those for group 2 members must be maintained. With purely heterogenous
-mixing, the product of one group size and act rate must equal the product of
-the other group size and act rate: \eqn{N_1 \alpha_1 = N_2 \alpha_2}, where
-\eqn{N_i} is the group size and \eqn{\alpha_i} the group-specific act rates
-at time \eqn{t}. The \code{balance} parameter here specifies which group's
-act rate should control the others with respect to balancing. See the
-\href{http://statnet.github.io/tut/BasicDCMs.html}{Basic DCMs} tutorial
-for further details.
-}
-
 \section{Sensitivity Analyses}{
 
 \code{dcm} has been designed to easily run DCM sensitivity analyses, where a

@@ -5,8 +5,16 @@
 \title{Vertex Attributes for Bipartite Network}
 \usage{
 bipvals(nw, mode, val)
+
+bipvals(nw, mode, val)
 }
 \arguments{
+\item{nw}{An object of class \code{network} or \code{networkDynamic}.}
+
+\item{mode}{Mode number.}
+
+\item{val}{Nodal attribute to return.}
+
 \item{nw}{An object of class \code{network} or \code{networkDynamic}.}
 
 \item{mode}{Mode number.}
@@ -16,8 +24,15 @@ bipvals(nw, mode, val)
 \description{
 Outputs static vertex attributes for a bipartite network for one
              specified mode.
+
+Outputs static vertex attributes for a bipartite network for one
+             specified mode.
 }
 \examples{
+nw <- network.initialize(n = 10, bipartite = 5)
+nw <- set.vertex.attribute(nw, "male", rep(0:1, each = 5))
+bipvals(nw, mode = 1, "male")
+
 nw <- network.initialize(n = 10, bipartite = 5)
 nw <- set.vertex.attribute(nw, "male", rep(0:1, each = 5))
 bipvals(nw, mode = 1, "male")

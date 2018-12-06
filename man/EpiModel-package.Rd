@@ -85,6 +85,9 @@ necessary parameters, initial conditions, and control settings:
        user to simulate fully original epidemic models in EpiModel. See the
        documention for the specific control functions help pages.
 }
+Each of the three model classes described above have one and two mode (group)
+functions with the two mode functions being called with a .bip extension (e.g.,
+param.dcm.bip for the two mode extension to param.dcm).
 
 With the models parameterized, the functions for simulating epidemic models are:
 \itemize{
@@ -109,6 +112,13 @@ With the models parameterized, the functions for simulating epidemic models are:
          initial conditions, and control settings as defined above.
  }
 }
+
+Note, all of the models and functions described above and throughout the EpiModel
+platform, have a bipartite (two modes/groups) counterpart that is called using the .bip
+extension. For example, to run a two mode network epidemic model, one would first run the
+setup functions param.net.bip, init.net.bip and control.net.bip. Once setup is complete
+epidemic simulation is done using netsim.bip after running network estimation and (optional)
+diagnostic functions netest.bip and netdx.bip.
 }
 
 \references{

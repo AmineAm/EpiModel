@@ -380,5 +380,4 @@ verbose.net.bip <- function(x, type, s = 1, at = 2) {
       }
     }
   }
-
 }

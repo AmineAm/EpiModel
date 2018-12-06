@@ -66,10 +66,9 @@ and in multiple run models the specific run may also be specified.
 Compartment prevalences are the size of a compartment over some denominator.
 To plot the raw numbers from any compartment, use \code{popfrac=FALSE}; this
 is the default. The \code{popfrac} parameter calculates
-and plots the denominators of all specified compartments using these rules: 1)
-for one-group models, the prevalence of any compartment is the compartment size
-divided by the total population size; 2) for two-group models, the prevalence
-of any compartment is the compartment size divided by the group size.
+and plots the denominators of all specified compartments; for one-group models,
+the prevalence of any compartment is the compartment size
+divided by the total population size.
 }
 
 \section{Color Palettes}{
